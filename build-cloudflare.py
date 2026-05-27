@@ -35,6 +35,9 @@ content_ref_end = re.compile(r'{%\s*endcontent-ref\s*%}')
 embed = re.compile(r'{%\s*embed\s+url="([^"]+)"\s*%}')
 file_ref = re.compile(r'{%\s*file\s+src="([^"]+)"\s*%}')
 
+# Fix unknown language markup for honkit highlight plugin
+markup_lang = re.compile(r'```\s*markup\b', re.IGNORECASE)
+
 rapidoc_script = '<script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>'
 
 for root, _, files in os.walk(build_dir):
@@ -75,8 +78,15 @@ for root, _, files in os.walk(build_dir):
             content = content_ref_end.sub('', content)
             content = embed.sub(r'[Embedded Link](\1)', content)
             content = file_ref.sub(r'[File](\1)', content)
+
+            content = markup_lang.sub('```html', content)
             
-            # Remove raw tags
+            # CRITICAL: Escape all {{ and }} to prevent Honkit/Nunjucks template errors
+            # Also handle Gitbook's escaped versions \{{ and \}}
+            content = content.replace('\\{\\{', '&#123;&#123;')
+            content = content.replace('\\}\\}', '&#125;&#125;')
+            content = content.replace('{{', '&#123;&#123;')
+            content = content.replace('}}', '&#125;&#125;')
                 
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(content)
