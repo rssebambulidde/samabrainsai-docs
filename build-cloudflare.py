@@ -32,6 +32,9 @@ tab_end = re.compile(r'{%\s*endtab\s*%}')
 content_ref = re.compile(r'{%\s*content-ref\s+url="([^"]+)"\s*%}')
 content_ref_end = re.compile(r'{%\s*endcontent-ref\s*%}')
 
+embed = re.compile(r'{%\s*embed\s+url="([^"]+)"\s*%}')
+file_ref = re.compile(r'{%\s*file\s+src="([^"]+)"\s*%}')
+
 rapidoc_script = '<script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>'
 
 for root, _, files in os.walk(build_dir):
@@ -67,9 +70,13 @@ for root, _, files in os.walk(build_dir):
             content = tab_start.sub(r'**\1:**\n', content)
             content = tab_end.sub('\n', content)
             
-            # Replace content refs
+            # Replace content refs and embeds
             content = content_ref.sub(r'[Reference](\1)', content)
             content = content_ref_end.sub('', content)
+            content = embed.sub(r'[Embedded Link](\1)', content)
+            content = file_ref.sub(r'[File](\1)', content)
+            
+            # Remove raw tags
                 
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(content)
